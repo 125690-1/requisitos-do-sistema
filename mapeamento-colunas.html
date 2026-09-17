@@ -17,7 +17,7 @@
         </a>
       </div>
       <h1 class="text-2xl md:text-3xl font-bold text-amber-400">De-Para e Configuração de Colunas</h1>
-      <p class="text-sm md:text-base text-slate-300 mt-2">Informe os nomes exatos dos cabeçalhos. Se a coluna não for utilizada no sistema, basta ativar o botão <strong>"Excluir Coluna"</strong>. Marque também caso seja uma <strong>Lista Suspensa (Select)</strong>.</p>
+      <p class="text-sm md:text-base text-slate-300 mt-2">Informe os nomes exatos dos cabeçalhos. Se a coluna não for utilizada no sistema, basta ativar o botão <strong>"Excluir Coluna"</strong>. Marque também se ela for uma <strong>Lista Suspensa</strong> ou se deve ficar com a <strong>Edição Bloqueada</strong> (apenas leitura).</p>
     </header>
 
     <div class="overflow-x-auto">
@@ -84,6 +84,8 @@
       tr.id = `row-${k}`;
       if (isExcluir) tr.className = "bg-red-50/60 transition-colors";
 
+      const isLocked = localStorage.getItem("lck_" + k) === "true";
+
       tr.innerHTML = `
         <td class="p-4 font-bold text-slate-800 text-sm md:text-base">
           <div class="flex items-center justify-between mb-2">
@@ -95,10 +97,14 @@
             </label>
           </div>
           
-          <div class="mt-2 flex items-center gap-2 ${isExcluir ? 'opacity-40 pointer-events-none' : ''}">
+          <div class="mt-2 flex flex-col gap-1.5 ${isExcluir ? 'opacity-40 pointer-events-none' : ''}">
+            <label class="inline-flex items-center text-xs font-semibold text-slate-600 cursor-pointer">
+              <input type="checkbox" data-k="${k}" class="chk-locked rounded text-slate-800 focus:ring-slate-500 w-4 h-4 mr-1.5" ${isLocked ? 'checked' : ''}>
+              🔒 Edição Bloqueada
+            </label>
             <label class="inline-flex items-center text-xs font-semibold text-slate-600 cursor-pointer">
               <input type="checkbox" data-k="${k}" class="chk-select rounded text-amber-500 focus:ring-amber-400 w-4 h-4 mr-1.5" ${isSelect ? 'checked' : ''}>
-              É lista suspensa?
+              🔘 É lista suspensa?
             </label>
           </div>
           <div id="box-options-${k}" class="mt-2 ${isSelect && !isExcluir ? '' : 'hidden'}">
@@ -176,6 +182,13 @@
       });
     });
 
+    // Eventos do Checkbox (Edição Bloqueada)
+    document.querySelectorAll(".chk-locked").forEach(chk => {
+      chk.addEventListener("change", e => {
+        localStorage.setItem("lck_" + e.target.dataset.k, e.target.checked ? "true" : "false");
+      });
+    });
+
     obs.addEventListener("input", e => localStorage.setItem("m_obs", e.target.value));
 
     // Botão Gerar Resposta
@@ -191,12 +204,16 @@
           txt += `  - ❌ *Status:* EXCLUIR COLUNA\n\n`;
         } else {
           const isSelect = localStorage.getItem("sel_" + k) === "true";
+          const isLocked = localStorage.getItem("lck_" + k) === "true";
           const options = localStorage.getItem("opt_" + k) || "Nenhuma informada";
 
           txt += `  - Reclamação Pendente: ${localStorage.getItem("m1_" + k) || "-"}\n`;
           txt += `  - Consolidação CE: ${localStorage.getItem("m2_" + k) || "-"}\n`;
           
-          if(isSelect) {
+          if (isLocked) {
+            txt += `  - 🔒 *Edição Bloqueada:* Sim\n`;
+          }
+          if (isSelect) {
             txt += `  - 🔘 *Lista Suspensa:* Sim\n`;
             txt += `  - 📝 *Opções:* ${options}\n`;
           }

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapeamento de Colunas - Controle Ouvidoria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
+
+  <main class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    
+    <header class="bg-slate-900 text-white p-6 md:p-8 relative">
+      <div class="mb-4">
+        <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-1.5 rounded-lg transition-colors border border-slate-700">
+          &larr; Voltar ao Início
+        </a>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-bold text-amber-400">De-Para e Configuração de Colunas</h1>
+      <p class="text-sm md:text-base text-slate-300 mt-2">Informe os nomes exatos dos cabeçalhos. Se a coluna não for utilizada no sistema, basta ativar o botão <strong>"Excluir Coluna"</strong>. Marque também caso seja uma <strong>Lista Suspensa (Select)</strong>.</p>
+    </header>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[900px]">
+        <thead>
+          <tr class="bg-slate-100 text-slate-700 text-xs md:text-sm uppercase tracking-wider">
+            <th class="p-4 border-b font-bold w-1/4">Coluna na Grade (Sistema)</th>
+            <th class="p-4 border-b font-bold border-l bg-blue-50/50 text-blue-900 w-1/3">Reclamação Pendente - Ouvidoria 2026</th>
+            <th class="p-4 border-b font-bold border-l bg-emerald-50/50 text-emerald-900 w-1/3">Consolidação Pendência Ouv CE (2N e 3N)</th>
+          </tr>
+        </thead>
+        <tbody id="table-body" class="divide-y divide-slate-200 text-base"></tbody>
+      </table>
+    </div>
+
+    <div class="p-6 md:p-8 border-t bg-slate-50">
+      <label for="obs" class="block text-sm font-bold text-slate-700 mb-2">Observações extras:</label>
+      <textarea id="obs" rows="3" class="w-full rounded-xl border border-slate-300 p-3 text-sm md:text-base outline-none focus:ring-2 focus:ring-amber-400" placeholder="Alguma regra específica?"></textarea>
+    </div>
+
+    <!-- Área do Botão de Gerar e Pré-visualização -->
+    <div class="p-6 md:p-8 border-t flex flex-col items-center justify-center bg-white space-y-4">
+      <button id="btn-gerar" class="bg-slate-900 text-amber-400 font-bold text-sm md:text-base uppercase tracking-wider px-8 py-4 rounded-xl hover:bg-slate-800 transition-all shadow-md">
+        Gerar Resposta Organizada
+      </button>
+
+      <!-- Seção que aparece após gerar -->
+      <div id="container-resultado" class="w-full hidden space-y-3 mt-4 pt-4 border-t border-slate-200">
+        <label for="txt-resultado" class="block text-sm font-bold text-slate-700">Pré-visualização da Mensagem (Você pode editar se preferir):</label>
+        <textarea id="txt-resultado" rows="10" class="w-full rounded-xl border border-slate-300 p-4 font-mono text-xs md:text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button id="btn-copiar" class="bg-emerald-600 text-white font-bold text-sm uppercase tracking-wider px-6 py-3 rounded-xl hover:bg-emerald-700 transition-all shadow flex items-center justify-center gap-2">
+            Copiar Mensagem Pronta
+          </button>
+        </div>
+        <p id="msg" class="text-center text-sm font-bold text-emerald-600 opacity-0 transition-opacity">Copiado com sucesso! Cole no WhatsApp.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const colunas = [
+      "TIPO", "NUMERO PONTO FORNECIMENTO", "NUMERO DO CASO", "DATA DE ABERTURA",
+      "CONTA CONTRATO", "NOME DA CONTA", "ENDERECO", "MUNICIPALIDADE",
+      "REGIONAL", "OBSERVACOES", "TEMA AGRUPADO", "PROCESSO", "AREA",
+      "RETORNO", "STATUS PROCESSO", "RESPOSTA AREA"
+    ];
+
+    const tbody = document.getElementById("table-body");
+    const obs = document.getElementById("obs");
+
+    colunas.forEach(col => {
+      const tr = document.createElement("tr");
+      const k = col.replace(/\s+/g, '_');
+      
+      const v1 = localStorage.getItem("m1_" + k) || "";
+      const v2 = localStorage.getItem("m2_" + k) || "";
+      const isExcluir = localStorage.getItem("exc_" + k) === "true";
+      const isSelect = localStorage.getItem("sel_" + k) === "true";
+      const optionsVal = localStorage.getItem("opt_" + k) || "";
+
+      tr.id = `row-${k}`;
+      if (isExcluir) tr.className = "bg-red-50/60 transition-colors";
+
+      tr.innerHTML = `
+        <td class="p-4 font-bold text-slate-800 text-sm md:text-base">
+          <div class="flex items-center justify-between mb-2">
+            <span>${col}</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" data-k="${k}" class="chk-excluir sr-only peer" ${isExcluir ? 'checked' : ''}>
+              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+              <span class="ml-1.5 text-[11px] font-bold text-red-600">Excluir</span>
+            </label>
+          </div>
+          
+          <div class="mt-2 flex items-center gap-2 ${isExcluir ? 'opacity-40 pointer-events-none' : ''}">
+            <label class="inline-flex items-center text-xs font-semibold text-slate-600 cursor-pointer">
+              <input type="checkbox" data-k="${k}" class="chk-select rounded text-amber-500 focus:ring-amber-400 w-4 h-4 mr-1.5" ${isSelect ? 'checked' : ''}>
+              É lista suspensa?
+            </label>
+          </div>
+          <div id="box-options-${k}" class="mt-2 ${isSelect && !isExcluir ? '' : 'hidden'}">
+            <input type="text" data-k="${k}" value="${optionsVal}" placeholder="Opções separadas por vírgula..." class="input-options w-full p-1.5 text-xs border border-amber-300 bg-amber-50/30 rounded focus:ring-1 focus:ring-amber-400 outline-none">
+          </div>
+        </td>
+        <td class="p-3 border-l bg-blue-50/10 align-top">
+          <input type="text" data-k="${k}" data-p="1" value="${v1}" placeholder="Nome exato..." class="input-p1-${k} w-full p-2.5 text-sm md:text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none ${isExcluir ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : ''}" ${isExcluir ? 'disabled' : ''}>
+        </td>
+        <td class="p-3 border-l bg-emerald-50/10 align-top">
+          <input type="text" data-k="${k}" data-p="2" value="${v2}" placeholder="Nome exato..." class="input-p2-${k} w-full p-2.5 text-sm md:text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-400 outline-none ${isExcluir ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : ''}" ${isExcluir ? 'disabled' : ''}>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    obs.value = localStorage.getItem("m_obs") || "";
+
+    // Eventos de Toggle Excluir Coluna
+    document.querySelectorAll(".chk-excluir").forEach(chk => {
+      chk.addEventListener("change", e => {
+        const k = e.target.dataset.k;
+        const tr = document.getElementById(`row-${k}`);
+        const inp1 = document.querySelector(`.input-p1-${k}`);
+        const inp2 = document.querySelector(`.input-p2-${k}`);
+        const chkSel = tr.querySelector(".chk-select");
+        const boxOpt = document.getElementById(`box-options-${k}`);
+
+        if(e.target.checked) {
+          localStorage.setItem("exc_" + k, "true");
+          tr.className = "bg-red-50/65 transition-colors";
+          inp1.disabled = true; inp1.classList.add("bg-slate-200", "text-slate-400", "cursor-not-allowed");
+          inp2.disabled = true; inp2.classList.add("bg-slate-200", "text-slate-400", "cursor-not-allowed");
+          tr.querySelector("div.mt-2.flex").classList.add("opacity-40", "pointer-events-none");
+          boxOpt.classList.add("hidden");
+        } else {
+          localStorage.setItem("exc_" + k, "false");
+          tr.className = "hover:bg-slate-50 transition-colors";
+          inp1.disabled = false; inp1.classList.remove("bg-slate-200", "text-slate-400", "cursor-not-allowed");
+          inp2.disabled = false; inp2.classList.remove("bg-slate-200", "text-slate-400", "cursor-not-allowed");
+          tr.querySelector("div.mt-2.flex").classList.remove("opacity-40", "pointer-events-none");
+          if(chkSel.checked) boxOpt.classList.remove("hidden");
+        }
+      });
+    });
+
+    // Eventos de inputs de texto normais
+    document.querySelectorAll("input[type='text']:not(.input-options)").forEach(i => {
+      i.addEventListener("input", e => {
+        localStorage.setItem(`m${e.target.dataset.p}_${e.target.dataset.k}`, e.target.value);
+      });
+    });
+
+    // Eventos dos Checkbox (Lista Suspensa)
+    document.querySelectorAll(".chk-select").forEach(chk => {
+      chk.addEventListener("change", e => {
+        const k = e.target.dataset.k;
+        const box = document.getElementById(`box-options-${k}`);
+        if(e.target.checked) {
+          box.classList.remove("hidden");
+          localStorage.setItem("sel_" + k, "true");
+        } else {
+          box.classList.add("hidden");
+          localStorage.setItem("sel_" + k, "false");
+          localStorage.setItem("opt_" + k, "");
+          box.querySelector("input").value = "";
+        }
+      });
+    });
+
+    // Eventos dos inputs de Opções da Lista Suspensa
+    document.querySelectorAll(".input-options").forEach(inp => {
+      inp.addEventListener("input", e => {
+        localStorage.setItem("opt_" + e.target.dataset.k, e.target.value);
+      });
+    });
+
+    obs.addEventListener("input", e => localStorage.setItem("m_obs", e.target.value));
+
+    // Botão Gerar Resposta
+    document.getElementById("btn-gerar").addEventListener("click", () => {
+      let txt = "*MAPEAMENTO DE COLUNAS - CONTROLE OUVIDORIA*\n\n";
+      
+      colunas.forEach(col => {
+        const k = col.replace(/\s+/g, '_');
+        const isExcluir = localStorage.getItem("exc_" + k) === "true";
+
+        txt += `• *${col}*\n`;
+        if(isExcluir) {
+          txt += `  - ❌ *Status:* EXCLUIR COLUNA\n\n`;
+        } else {
+          const isSelect = localStorage.getItem("sel_" + k) === "true";
+          const options = localStorage.getItem("opt_" + k) || "Nenhuma informada";
+
+          txt += `  - Reclamação Pendente: ${localStorage.getItem("m1_" + k) || "-"}\n`;
+          txt += `  - Consolidação CE: ${localStorage.getItem("m2_" + k) || "-"}\n`;
+          
+          if(isSelect) {
+            txt += `  - 🔘 *Lista Suspensa:* Sim\n`;
+            txt += `  - 📝 *Opções:* ${options}\n`;
+          }
+          txt += `\n`;
+        }
+      });
+
+      const obsVal = localStorage.getItem("m_obs");
+      if(obsVal) txt += `*Observações:* ${obsVal}`;
+
+      document.getElementById("txt-resultado").value = txt;
+      document.getElementById("container-resultado").classList.remove("hidden");
+      document.getElementById("container-resultado").scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Botão Copiar da Pré-visualização
+    document.getElementById("btn-copiar").addEventListener("click", () => {
+      const textoFinal = document.getElementById("txt-resultado").value;
+      
+      navigator.clipboard.writeText(textoFinal).then(() => {
+        const m = document.getElementById("msg");
+        m.classList.remove("opacity-0");
+        setTimeout(() => m.classList.add("opacity-0"), 3500);
+      });
+    });
+  </script>
+</body>
+</html>

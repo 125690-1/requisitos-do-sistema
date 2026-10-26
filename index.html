@@ -29,6 +29,20 @@
             <span id="badge-status-1" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Pendente</span>
           </div>
           <h2 class="text-base font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Mapeamento de Colunas (De-Para)</h2>
+          <p class="text-xs text-slate-500">Mapeamento dos cabeçalhos das planilhas para as colunas do banco.</p>
+        </div>
+        <span class="text-xs font-bold text-amber-600 group-hover:underline flex items-center gap-1">Responder &rarr;</span>
+      </a>
+
+      <!-- Card 2: Processos e Setores -->
+      <a href="processos-setores.html" class="group bg-white p-5 rounded-xl shadow-sm hover:shadow-md border border-slate-200 hover:border-amber-400 transition-all flex items-center justify-between">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-50 text-blue-700 rounded">Etapa 2</span>
+            <span id="badge-status-2" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Pendente</span>
+          </div>
+          <h2 class="text-base font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Correlação: Processos e Setores Responsáveis</h2>
+          <p class="text-xs text-slate-500">Defina quais setores responsáveis pertencem a cada processo de atuação.</p>
         </div>
         <span class="text-xs font-bold text-amber-600 group-hover:underline flex items-center gap-1">Responder &rarr;</span>
       </a>
@@ -42,24 +56,45 @@
   </footer>
 
   <script>
+    // Verificação Etapa 1
     const colunas = [
       "NUMERO PONTO FORNECIMENTO", "NUMERO DO CASO", "DATA DE ABERTURA",
       "CONTA CONTRATO", "NOME DA CONTA", "ENDERECO", "MUNICIPALIDADE",
       "REGIONAL", "OBSERVACOES", "TEMA AGRUPADO", "PROCESSO"
     ];
 
-    let preenchido = false;
+    let preenchido1 = false;
     colunas.forEach(col => {
       const k = col.replace(/\s+/g, '_');
       if (localStorage.getItem("m1_" + k) || localStorage.getItem("m2_" + k)) {
-        preenchido = true;
+        preenchido1 = true;
       }
     });
 
-    if (preenchido) {
-      const badge = document.getElementById("badge-status-1");
-      badge.className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800";
-      badge.innerText = "Respondido ✓";
+    if (preenchido1) {
+      const badge1 = document.getElementById("badge-status-1");
+      if (badge1) {
+        badge1.className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800";
+        badge1.innerText = "Respondido ✓";
+      }
+    }
+
+    // Verificação Etapa 2
+    let preenchido2 = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("ps_") && localStorage.getItem(key) === "true") {
+        preenchido2 = true;
+        break;
+      }
+    }
+
+    if (preenchido2) {
+      const badge2 = document.getElementById("badge-status-2");
+      if (badge2) {
+        badge2.className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800";
+        badge2.innerText = "Respondido ✓";
+      }
     }
   </script>
 

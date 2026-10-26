@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correlação Processos x Setores - Controle Ouvidoria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
+
+  <main class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    
+    <!-- Cabeçalho -->
+    <header class="bg-slate-900 text-white p-6 md:p-8 relative">
+      <div class="mb-4">
+        <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-1.5 rounded-lg transition-colors border border-slate-700">
+          &larr; Voltar ao Início
+        </a>
+      </div>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded border border-amber-400/30">
+            Etapa 2 - Configuração de Permissões
+          </span>
+          <h1 class="text-2xl md:text-3xl font-bold text-amber-400 mt-2">
+            Correlação: Processos e Setores Responsáveis
+          </h1>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-slate-800/60 border border-slate-700 p-4 rounded-xl text-xs md:text-sm text-slate-300 space-y-2">
+        <p>
+          🎯 <strong>Objetivo:</strong> No sistema da Ouvidoria, ao cadastrar um usuário ou filtrar reclamações, cada <strong>Processo</strong> está vinculado a determinados <strong>Setores Responsáveis</strong>.
+        </p>
+        <p>
+          ✅ <strong>Como responder:</strong> Em cada um dos 4 processos abaixo, marque com checkbox todos os setores que pertencem a ele. Ao final, clique em <strong>"Gerar Resposta para o Teams"</strong> e envie pelo chat do Teams.
+        </p>
+      </div>
+    </header>
+
+    <!-- Lista de Processos e Checkboxes dos Setores -->
+    <div id="processos-container" class="p-6 md:p-8 space-y-8 bg-slate-50">
+      <!-- Inserido dinamicamente via JavaScript -->
+    </div>
+
+    <!-- Observações Gerais -->
+    <div class="p-6 md:p-8 border-t bg-white">
+      <label for="obs" class="block text-sm font-bold text-slate-700 mb-2">
+        Observações ou setores adicionais (opcional):
+      </label>
+      <textarea id="obs" rows="3" class="w-full rounded-xl border border-slate-300 p-3 text-sm md:text-base outline-none focus:ring-2 focus:ring-amber-400" placeholder="Ex: Há algum outro setor que não está na lista? Alguma regra de exceção?"></textarea>
+    </div>
+
+    <!-- Área de Geração da Resposta -->
+    <div class="p-6 md:p-8 border-t flex flex-col items-center justify-center bg-slate-50 space-y-4">
+      <button id="btn-gerar" class="bg-slate-900 text-amber-400 font-bold text-sm md:text-base uppercase tracking-wider px-8 py-4 rounded-xl hover:bg-slate-800 transition-all shadow-md flex items-center gap-2 cursor-pointer">
+        <span>Gerar Resposta para o Teams</span>
+      </button>
+
+      <!-- Container do Resultado (Pré-visualização) -->
+      <div id="container-resultado" class="w-full hidden space-y-3 mt-4 pt-6 border-t border-slate-200">
+        <div class="flex items-center justify-between">
+          <label for="txt-resultado" class="block text-sm font-bold text-slate-700">
+            Pré-visualização da Mensagem Formatada para o Teams:
+          </label>
+          <span class="text-xs text-slate-500 font-medium">Você pode revisar ou ajustar o texto antes de copiar</span>
+        </div>
+
+        <textarea id="txt-resultado" rows="14" class="w-full rounded-xl border border-slate-300 p-4 font-mono text-xs md:text-sm bg-white outline-none focus:ring-2 focus:ring-blue-400 shadow-inner"></textarea>
+        
+        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <button id="btn-copiar" class="bg-emerald-600 text-white font-bold text-sm uppercase tracking-wider px-6 py-3.5 rounded-xl hover:bg-emerald-700 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span>Copiar Mensagem Pronta</span>
+          </button>
+        </div>
+        
+        <p id="msg-copiado" class="text-center text-sm font-bold text-emerald-600 opacity-0 transition-opacity">
+          ✅ Mensagem copiada com sucesso! Agora basta colar no chat do Teams.
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 mt-6 pb-6">
+    Controle Ouvidoria &bull; Módulo de Requisitos
+  </footer>
+
+  <script>
+    const PROCESSOS = [
+      {
+        id: "corte_religacao",
+        nome: "CORTE/RELIGAÇÃO",
+        cor: "border-blue-300 bg-blue-50/30 text-blue-900",
+        badge: "bg-blue-100 text-blue-800 border-blue-200"
+      },
+      {
+        id: "novos_clientes",
+        nome: "NOVOS CLIENTES",
+        cor: "border-emerald-300 bg-emerald-50/30 text-emerald-900",
+        badge: "bg-emerald-100 text-emerald-800 border-emerald-200"
+      },
+      {
+        id: "operacao_manutencao",
+        nome: "OPERAÇÃO E MANUTENÇÃO",
+        cor: "border-purple-300 bg-purple-50/30 text-purple-900",
+        badge: "bg-purple-100 text-purple-800 border-purple-200"
+      },
+      {
+        id: "tecnica_aviso_emergencial",
+        nome: "TÉCNICA - AVISO EMERGENCIAL",
+        cor: "border-amber-300 bg-amber-50/30 text-amber-900",
+        badge: "bg-amber-100 text-amber-800 border-amber-200"
+      }
+    ];
+
+    const SETORES = [
+      "Ouvidoria",
+      "Corte e Religação Fortaleza",
+      "Corte e Religação Metropolitana",
+      "Ligação Nova Fortaleza",
+      "Ligação Nova Metropolitana",
+      "Poda",
+      "Gestão de Equipamento (RNT)",
+      "PCM",
+      "Regional Fortaleza",
+      "Regional Metropolitana (CSA)",
+      "Regional Metropolitana (CSB)",
+      "Regional Metropolitana (CSC)",
+      "Regional Metropolitana (CSH)",
+      "Regional Metropolitana (CSM)"
+    ];
+
+    const container = document.getElementById("processos-container");
+    const obs = document.getElementById("obs");
+
+    // Renderiza os processos e setores
+    PROCESSOS.forEach((proc, pIndex) => {
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden";
+      card.id = `card-proc-${proc.id}`;
+
+      card.innerHTML = `
+        <div class="p-5 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs">
+              ${pIndex + 1}
+            </span>
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Processo</span>
+              <h2 class="text-base sm:text-lg font-black text-slate-900">${proc.nome}</h2>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="badge-contador-${proc.id}" class="text-xs font-bold px-2.5 py-1 rounded-full ${proc.badge} border">
+              0 selecionados
+            </span>
+            <button type="button" data-proc="${proc.id}" class="btn-selecionar-todos text-xs font-bold text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+              Marcar Todos
+            </button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-proc="${proc.id}" class="btn-limpar-todos text-xs font-bold text-slate-500 hover:text-slate-700 px-2 py-1 rounded hover:bg-slate-100 transition-colors">
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        <div class="p-5 sm:p-6">
+          <p class="text-xs text-slate-500 font-medium mb-4">
+            Selecione todos os setores responsáveis vinculados ao processo <strong>${proc.nome}</strong>:
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="grid-setores-${proc.id}">
+            ${SETORES.map(setor => {
+              const setorKey = setor.replace(/[\s\(\)\/\.-]+/g, '_').toLowerCase();
+              const storageKey = `ps_${proc.id}_${setorKey}`;
+              const isChecked = localStorage.getItem(storageKey) === "true";
+
+              return `
+                <label class="item-setor flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 transition-all cursor-pointer select-none ${isChecked ? 'bg-amber-50/60 border-amber-300 ring-1 ring-amber-300/50' : 'bg-white'}">
+                  <input 
+                    type="checkbox" 
+                    data-proc="${proc.id}" 
+                    data-setor="${setor}" 
+                    data-key="${storageKey}"
+                    class="chk-setor mt-0.5 w-4 h-4 rounded text-amber-500 focus:ring-amber-400 border-slate-300 cursor-pointer"
+                    ${isChecked ? 'checked' : ''}
+                  >
+                  <span class="text-xs sm:text-sm font-semibold text-slate-800 leading-tight">
+                    ${setor}
+                  </span>
+                </label>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    // Função para atualizar o contador de cada processo
+    function atualizarContador(procId) {
+      const checkedBoxes = document.querySelectorAll(`.chk-setor[data-proc="${procId}"]:checked`);
+      const contadorBadge = document.getElementById(`badge-contador-${procId}`);
+      if (contadorBadge) {
+        contadorBadge.innerText = `${checkedBoxes.length} selecionado${checkedBoxes.length === 1 ? '' : 's'}`;
+      }
+    }
+
+    // Inicializa os contadores
+    PROCESSOS.forEach(proc => atualizarContador(proc.id));
+
+    // Carrega observações
+    obs.value = localStorage.getItem("ps_obs") || "";
+    obs.addEventListener("input", e => localStorage.setItem("ps_obs", e.target.value));
+
+    // Eventos de clique nas checkboxes
+    document.querySelectorAll(".chk-setor").forEach(chk => {
+      chk.addEventListener("change", e => {
+        const isChecked = e.target.checked;
+        const key = e.target.dataset.key;
+        const procId = e.target.dataset.proc;
+        const label = e.target.closest("label");
+
+        if (isChecked) {
+          localStorage.setItem(key, "true");
+          label.classList.add("bg-amber-50/60", "border-amber-300", "ring-1", "ring-amber-300/50");
+          label.classList.remove("bg-white", "border-slate-200");
+        } else {
+          localStorage.setItem(key, "false");
+          label.classList.remove("bg-amber-50/60", "border-amber-300", "ring-1", "ring-amber-300/50");
+          label.classList.add("bg-white", "border-slate-200");
+        }
+
+        atualizarContador(procId);
+      });
+    });
+
+    // Marcar Todos de um processo
+    document.querySelectorAll(".btn-selecionar-todos").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const procId = btn.dataset.proc;
+        document.querySelectorAll(`.chk-setor[data-proc="${procId}"]`).forEach(chk => {
+          chk.checked = true;
+          localStorage.setItem(chk.dataset.key, "true");
+          const label = chk.closest("label");
+          label.classList.add("bg-amber-50/60", "border-amber-300", "ring-1", "ring-amber-300/50");
+          label.classList.remove("bg-white", "border-slate-200");
+        });
+        atualizarContador(procId);
+      });
+    });
+
+    // Limpar Todos de um processo
+    document.querySelectorAll(".btn-limpar-todos").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const procId = btn.dataset.proc;
+        document.querySelectorAll(`.chk-setor[data-proc="${procId}"]`).forEach(chk => {
+          chk.checked = false;
+          localStorage.setItem(chk.dataset.key, "false");
+          const label = chk.closest("label");
+          label.classList.remove("bg-amber-50/60", "border-amber-300", "ring-1", "ring-amber-300/50");
+          label.classList.add("bg-white", "border-slate-200");
+        });
+        atualizarContador(procId);
+      });
+    });
+
+    // Gerar Resposta Formatada para o Teams (Sem asteriscos)
+    document.getElementById("btn-gerar").addEventListener("click", () => {
+      let txt = "📋 CORRELAÇÃO: PROCESSOS E SETORES RESPONSÁVEIS\n";
+      txt += "Preenchimento do questionário de requisitos do sistema Controle Ouvidoria.\n";
+      txt += "──────────────────────────────────────────────\n\n";
+
+      let totalMarcadosGlobal = 0;
+
+      PROCESSOS.forEach((proc, idx) => {
+        const checkedList = [];
+        document.querySelectorAll(`.chk-setor[data-proc="${proc.id}"]:checked`).forEach(c => {
+          checkedList.push(c.dataset.setor);
+        });
+
+        totalMarcadosGlobal += checkedList.length;
+
+        txt += `🔹 ${idx + 1}. PROCESSO: ${proc.nome}\n`;
+        if (checkedList.length === 0) {
+          txt += `   ⚠️ Nenhum setor selecionado para este processo.\n\n`;
+        } else {
+          txt += `   Setores vinculados (${checkedList.length}):\n`;
+          checkedList.forEach(s => {
+            txt += `   • ${s}\n`;
+          });
+          txt += `\n`;
+        }
+      });
+
+      const obsVal = (document.getElementById("obs").value || "").trim();
+      if (obsVal) {
+        txt += `──────────────────────────────────────────────\n`;
+        txt += `📝 Observações / Setores Extras:\n${obsVal}\n`;
+      }
+
+      document.getElementById("txt-resultado").value = txt;
+      const resContainer = document.getElementById("container-resultado");
+      resContainer.classList.remove("hidden");
+      resContainer.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Copiar para a área de transferência
+    document.getElementById("btn-copiar").addEventListener("click", () => {
+      const textoFinal = document.getElementById("txt-resultado").value;
+      
+      navigator.clipboard.writeText(textoFinal).then(() => {
+        const msg = document.getElementById("msg-copiado");
+        msg.classList.remove("opacity-0");
+        setTimeout(() => msg.classList.add("opacity-0"), 4000);
+      });
+    });
+  </script>
+</body>
+</html>
